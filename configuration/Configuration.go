@@ -1,6 +1,7 @@
 package configuration
 
 import (
+	"../book"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -19,5 +20,6 @@ func Init() {
 	if err != nil {
 		fmt.Println("error:", err)
 	}
-	fmt.Println(configuration.Seed)
+
+	book.Update(&configuration.Seed[0], nil)
 }

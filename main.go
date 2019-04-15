@@ -1,11 +1,10 @@
 package main
 
 import (
-	"./book"
 	"./configuration"
 )
 
 func main() {
-	book.Start()
+	//	book.Start()
 	configuration.Init()
 }
