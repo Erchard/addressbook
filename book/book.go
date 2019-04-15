@@ -18,7 +18,6 @@ func Start() {
 	data, err := db.Get([]byte("key"), nil)
 
 	println(string(data))
-
 }
 
 func Open(addr string) (*bufio.ReadWriter, error) {

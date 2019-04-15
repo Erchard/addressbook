@@ -7,8 +7,7 @@ import (
 )
 
 type Configuration struct {
-	Users  []string
-	Groups []string
+	Seed []string
 }
 
 func Init() {
@@ -20,5 +19,5 @@ func Init() {
 	if err != nil {
 		fmt.Println("error:", err)
 	}
-	fmt.Println(configuration.Users) // output: [UserA, UserB]
+	fmt.Println(configuration.Seed)
 }
