@@ -2,6 +2,7 @@ package book
 
 import (
 	"../configuration"
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"github.com/pkg/errors"
@@ -80,8 +81,20 @@ func update(nodestatus *NodeStatus) error {
 	}
 	binary.BigEndian.PutUint64(value, timestamp)
 
+	data, err := db.Get(key, nil)
+	if err != nil {
+		log.Println(err)
+	}
+
 	err = db.Put(key, value, nil)
+	if err != nil {
+		log.Println(err)
+	}
 	nodestatus.Data = append(key, value...)
+
+	if bytes.Compare(data, value) != 0 {
+		sendToAllOnline(nodestatus.Data)
+	}
 	return nil
 }
 
