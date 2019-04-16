@@ -10,6 +10,7 @@ import (
 	"math"
 	"net"
 	"strconv"
+	"time"
 )
 
 var db *leveldb.DB
@@ -173,5 +174,42 @@ func handleConnection(conn net.Conn) {
 	err = conn.Close()
 	if err != nil {
 		log.Println(err)
+	}
+}
+
+func sendToAllOnline(msg []byte) {
+
+	if len(msg) != 26 {
+		log.Println("len(msg) = ", len(msg))
+		return
+	}
+
+	for _, node := range GetAll() {
+		if *node.Status == math.MaxUint64 {
+			conn, err := net.Dial("tcp", *node.Address)
+			if err != nil {
+				log.Println(err, "Dialing "+*node.Address+" failed")
+				timedisconnect := uint64(time.Now().Unix())
+				node.Status = &timedisconnect
+			}
+			sendedbytes, err := conn.Write(msg)
+			if sendedbytes != len(msg) {
+				log.Println("sendedbytes != len(msg)")
+				timedisconnect := uint64(time.Now().Unix())
+				node.Status = &timedisconnect
+			}
+			if err != nil {
+				log.Println(err)
+				timedisconnect := uint64(time.Now().Unix())
+				node.Status = &timedisconnect
+			}
+			if *node.Status != math.MaxUint64 {
+				err = update(&node)
+				if err != nil {
+					log.Println(err)
+				}
+			}
+			conn.Close()
+		}
 	}
 }
