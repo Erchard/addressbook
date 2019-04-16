@@ -15,7 +15,7 @@ type Configuration struct {
 var Config Configuration
 
 func init() {
-	file, err := os.Open("conf.json")
+	file, err := os.Open("config.json")
 	defer file.Close()
 	if err != nil {
 		log.Fatal(err)
