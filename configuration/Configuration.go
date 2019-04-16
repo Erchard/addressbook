@@ -1,31 +1,31 @@
 package configuration
 
 import (
-	"../book"
 	"encoding/json"
-	"fmt"
+	"log"
 	"os"
 )
 
 type Configuration struct {
-	Seed []string
+	Seed          []string
+	PreferredPort uint16
+	DbPath        string
 }
 
-func Init() {
-	file, _ := os.Open("conf.json")
+var Config Configuration
+
+func init() {
+	file, err := os.Open("conf.json")
 	defer file.Close()
-	decoder := json.NewDecoder(file)
-	configuration := Configuration{}
-	err := decoder.Decode(&configuration)
 	if err != nil {
-		fmt.Println("error:", err)
+		log.Fatal(err)
+	}
+	decoder := json.NewDecoder(file)
+
+	err = decoder.Decode(&Config)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	timestamp := uint64(1555386491)
-
-	seedstatus := book.NodeStatus{
-		Address: &configuration.Seed[0],
-		Status:  &timestamp,
-	}
-	book.Update(&seedstatus)
+	log.Println("Config updated")
 }

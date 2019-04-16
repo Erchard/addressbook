@@ -1,8 +1,10 @@
 package book
 
 import (
+	"../configuration"
 	"bufio"
 	"encoding/binary"
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/syndtr/goleveldb/leveldb"
 	"log"
@@ -10,8 +12,6 @@ import (
 	"net"
 	"strconv"
 )
-
-const DB_PATH = "path/to/db"
 
 var db *leveldb.DB
 
@@ -22,13 +22,19 @@ type NodeStatus struct {
 }
 
 func init() {
-	database, err := leveldb.OpenFile(DB_PATH, nil)
+	database, err := leveldb.OpenFile(configuration.Config.DbPath, nil)
+	//defer db.Close()
 	if err != nil {
 		log.Fatal(err)
 	} else {
 		db = database
-		log.Println("Database " + DB_PATH + " connected")
+		log.Println("Database " + configuration.Config.DbPath + " connected")
 	}
+
+	seedstatus := NodeStatus{
+		Address: &configuration.Config.Seed[0],
+	}
+	Update(&seedstatus)
 }
 
 /*
@@ -94,9 +100,21 @@ func restore(data []byte) *NodeStatus {
 	return &nodestatus
 }
 
-//func GetAll() []NodeStatus {
-//
-//}
+func GetAll() []NodeStatus {
+
+	nodeArray := make([]NodeStatus, 0)
+	iter := db.NewIterator(nil, nil)
+	for iter.Next() {
+		nodeArray = append(
+			nodeArray,
+			*restore(
+				append(
+					iter.Key(),
+					iter.Value()...)))
+	}
+	fmt.Println(nodeArray)
+	return nodeArray
+}
 
 func Open(addr string) (*bufio.ReadWriter, error) {
 	log.Println("Dial " + addr)
