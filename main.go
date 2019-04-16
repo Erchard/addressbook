@@ -6,6 +6,6 @@ import (
 
 func main() {
 
-	book.GetAll()
+	book.SayHello()
 
 }

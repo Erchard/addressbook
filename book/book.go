@@ -14,6 +14,8 @@ import (
 	"time"
 )
 
+const MSG_LEN = 26
+
 var db *leveldb.DB
 
 type NodeStatus struct {
@@ -178,12 +180,20 @@ func handleConnection(conn net.Conn) {
 	if err != nil {
 		log.Println(err)
 	}
-	var updateinfo = make([]byte, 26)
+	var updateinfo = make([]byte, MSG_LEN)
 
-	err = update(restore(updateinfo))
-	if err != nil {
-		log.Println(err)
+	readedbytes, err := conn.Read(updateinfo)
+
+	if readedbytes != MSG_LEN {
+		log.Println("readedbytes = ", readedbytes)
 	}
+	if bytes.Compare(updateinfo, make([]byte, MSG_LEN)) != 0 {
+		err = update(restore(updateinfo))
+		if err != nil {
+			log.Println(err)
+		}
+	}
+
 	err = conn.Close()
 	if err != nil {
 		log.Println(err)
@@ -192,7 +202,7 @@ func handleConnection(conn net.Conn) {
 
 func sendToAllOnline(msg []byte) {
 
-	if len(msg) != 26 {
+	if len(msg) != MSG_LEN {
 		log.Println("len(msg) = ", len(msg))
 		return
 	}
@@ -225,4 +235,8 @@ func sendToAllOnline(msg []byte) {
 			conn.Close()
 		}
 	}
+}
+
+func SayHello() {
+	sendToAllOnline(make([]byte, MSG_LEN))
 }
