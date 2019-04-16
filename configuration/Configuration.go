@@ -21,5 +21,11 @@ func Init() {
 		fmt.Println("error:", err)
 	}
 
-	book.Update(&configuration.Seed[0], nil)
+	timestamp := uint64(1555386491)
+
+	seedstatus := book.NodeStatus{
+		Address: &configuration.Seed[0],
+		Status:  &timestamp,
+	}
+	book.Update(&seedstatus)
 }

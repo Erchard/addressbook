@@ -3,13 +3,33 @@ package book
 import (
 	"bufio"
 	"encoding/binary"
-	"fmt"
 	"github.com/pkg/errors"
 	"github.com/syndtr/goleveldb/leveldb"
 	"log"
+	"math"
 	"net"
 	"strconv"
 )
+
+const DB_PATH = "path/to/db"
+
+var db *leveldb.DB
+
+type NodeStatus struct {
+	Address *string
+	Status  *uint64
+	Data    []byte
+}
+
+func init() {
+	database, err := leveldb.OpenFile(DB_PATH, nil)
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		db = database
+		log.Println("Database " + DB_PATH + " connected")
+	}
+}
 
 /*
 func Start() {
@@ -23,8 +43,8 @@ func Start() {
 	println(string(data))
 }
 */
-func Update(nodeaddress *string, status *uint64) {
-	host, port, err := net.SplitHostPort(*nodeaddress)
+func Update(nodestatus *NodeStatus) {
+	host, port, err := net.SplitHostPort(*nodestatus.Address)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -39,21 +59,44 @@ func Update(nodeaddress *string, status *uint64) {
 	key := append(byteHost, bytePort...)
 
 	value := make([]byte, 8)
-	if status != nil {
-		binary.BigEndian.PutUint64(value, *status)
+
+	var timestamp uint64
+	if nodestatus.Status != nil {
+		timestamp = *nodestatus.Status
 	} else {
-		value = []byte{255, 255, 255, 255, 255, 255, 255, 255}
-	}
+		timestamp = uint64(math.MaxUint64)
 
-	db, err := leveldb.OpenFile("path/to/db", nil)
-	if err != nil {
-		log.Fatal(err)
 	}
+	binary.BigEndian.PutUint64(value, timestamp)
+
 	err = db.Put(key, value, nil)
-
-	fmt.Printf("key: %x value: %x \n", key, value)
-
+	nodestatus.Data = append(key, value...)
 }
+
+func restore(data []byte) *NodeStatus {
+
+	nodestatus := NodeStatus{
+		Data: data,
+	}
+
+	host := net.IP(data[:16]).String()
+	port := binary.BigEndian.Uint16(data[16:18])
+	address := host + ":" + strconv.Itoa(int(port))
+
+	nodestatus.Address = &address
+
+	timestamp := binary.BigEndian.Uint64(data[18:26])
+
+	if timestamp != math.MaxUint64 {
+		nodestatus.Status = &timestamp
+	}
+
+	return &nodestatus
+}
+
+//func GetAll() []NodeStatus {
+//
+//}
 
 func Open(addr string) (*bufio.ReadWriter, error) {
 	log.Println("Dial " + addr)
