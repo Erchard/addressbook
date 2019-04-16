@@ -239,6 +239,7 @@ func sendToAllOnline(msg []byte) {
 }
 
 func SayHello() {
+	log.Println("Hello")
 	sendToAllOnline(make([]byte, MSG_LEN))
 	log.Println("Hello!")
 }
