@@ -2,7 +2,6 @@ package book
 
 import (
 	"../configuration"
-	"bufio"
 	"encoding/binary"
 	"fmt"
 	"github.com/pkg/errors"
@@ -35,6 +34,10 @@ func init() {
 		Address: &configuration.Config.Seed[0],
 	}
 	Update(&seedstatus)
+	err = server()
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
 
 /*
@@ -116,11 +119,29 @@ func GetAll() []NodeStatus {
 	return nodeArray
 }
 
-func Open(addr string) (*bufio.ReadWriter, error) {
-	log.Println("Dial " + addr)
-	conn, err := net.Dial("tcp", addr)
-	if err != nil {
-		return nil, errors.Wrap(err, "Dialing "+addr+" failed")
+func server() error {
+	var err error
+	var port string
+	if configuration.Config.PreferredPort != nil {
+		port = ":" + strconv.Itoa(int(*configuration.Config.PreferredPort))
+	} else {
+		port = ":11111"
 	}
-	return bufio.NewReadWriter(bufio.NewReader(conn), bufio.NewWriter(conn)), nil
+
+	listener, err := net.Listen("tcp", port)
+	if err != nil {
+		return errors.Wrapf(err, "Unable to listen on port %s\n", port)
+	}
+	log.Println("Listen on", listener.Addr().String())
+	for {
+		log.Println("Accept a connection request.")
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Println("Failed accepting a connection request:", err)
+			continue
+		}
+		log.Println("Handle incoming messages.")
+		//go e.handleMessages(conn)
+		fmt.Println(conn.RemoteAddr())
+	}
 }

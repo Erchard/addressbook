@@ -8,7 +8,7 @@ import (
 
 type Configuration struct {
 	Seed          []string
-	PreferredPort uint16
+	PreferredPort *uint16
 	DbPath        string
 }
 
