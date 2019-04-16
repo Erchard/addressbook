@@ -1,5 +1,5 @@
 {
   "Seed": [    "192.168.0.102:1648"],
-  "PreferredPort": 1648,
+  "PreferredPort": "1648",
   "DbPath": "path/to/db"
 }

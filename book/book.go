@@ -33,7 +33,7 @@ func init() {
 	seedstatus := NodeStatus{
 		Address: &configuration.Config.Seed[0],
 	}
-	Update(&seedstatus)
+	update(&seedstatus)
 	err = server()
 	if err != nil {
 		log.Fatalln(err)
@@ -52,10 +52,11 @@ func Start() {
 	println(string(data))
 }
 */
-func Update(nodestatus *NodeStatus) {
+func update(nodestatus *NodeStatus) error {
+
 	host, port, err := net.SplitHostPort(*nodestatus.Address)
 	if err != nil {
-		log.Fatal(err)
+		return errors.Wrapf(err, "Error: %s Split address %s\n", err, *nodestatus.Address)
 	}
 
 	ip := net.ParseIP(host)
@@ -80,6 +81,7 @@ func Update(nodestatus *NodeStatus) {
 
 	err = db.Put(key, value, nil)
 	nodestatus.Data = append(key, value...)
+	return nil
 }
 
 func restore(data []byte) *NodeStatus {
@@ -123,15 +125,22 @@ func server() error {
 	var err error
 	var port string
 	if configuration.Config.PreferredPort != nil {
-		port = ":" + strconv.Itoa(int(*configuration.Config.PreferredPort))
+		port = ":" + *configuration.Config.PreferredPort
 	} else {
-		port = ":11111"
+		port = ":0"
 	}
 
 	listener, err := net.Listen("tcp", port)
 	if err != nil {
 		return errors.Wrapf(err, "Unable to listen on port %s\n", port)
 	}
+
+	host, port, err := net.SplitHostPort(listener.Addr().String())
+	if err != nil {
+		log.Fatal(err)
+	}
+	configuration.Config.PreferredPort = &port
+	log.Println("Host: ", host)
 	log.Println("Listen on", listener.Addr().String())
 	for {
 		log.Println("Accept a connection request.")
@@ -141,7 +150,28 @@ func server() error {
 			continue
 		}
 		log.Println("Handle incoming messages.")
-		//go e.handleMessages(conn)
+		go handleConnection(conn)
 		fmt.Println(conn.RemoteAddr())
+	}
+}
+
+func handleConnection(conn net.Conn) {
+	address := conn.RemoteAddr().String()
+	nodestatus := NodeStatus{
+		Address: &address,
+	}
+	err := update(&nodestatus)
+	if err != nil {
+		log.Println(err)
+	}
+	var updateinfo = make([]byte, 26)
+
+	err = update(restore(updateinfo))
+	if err != nil {
+		log.Println(err)
+	}
+	err = conn.Close()
+	if err != nil {
+		log.Println(err)
 	}
 }
