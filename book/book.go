@@ -208,6 +208,7 @@ func sendToAllOnline(msg []byte) {
 	}
 
 	for _, node := range GetAll() {
+		log.Println(node)
 		if *node.Status == math.MaxUint64 {
 			conn, err := net.Dial("tcp", *node.Address)
 			if err != nil {
@@ -239,4 +240,5 @@ func sendToAllOnline(msg []byte) {
 
 func SayHello() {
 	sendToAllOnline(make([]byte, MSG_LEN))
+	log.Println("Hello!")
 }
