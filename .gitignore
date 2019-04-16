@@ -1,4 +1,5 @@
 /path/
 /.idea/
-config.json
+./config.json
+./configuration.json
 
