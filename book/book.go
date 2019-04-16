@@ -38,10 +38,8 @@ func init() {
 		Address: &configuration.Config.Seed[0],
 	}
 	update(&seedstatus)
-	err = server()
-	if err != nil {
-		log.Fatalln(err)
-	}
+	go server()
+
 }
 
 /*
